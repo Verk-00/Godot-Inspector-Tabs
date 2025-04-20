@@ -6,7 +6,7 @@ Vertical layout           |  Horizontal layout
 ![](https://github.com/user-attachments/assets/fc5455d2-c48d-4e1f-b51f-4c09e2d4eb83)  |  ![](https://github.com/user-attachments/assets/e2849982-a57f-46d6-bcfa-c38676032b9d)
 
 # Features
-- An option for horizontal/vertical tab layout. (Can be change in the `editor_settings/interface/inspector/tab_layout`)
+- An option for horizontal/vertical tab layout. (Can be change in the `editor_settings/interface/inspector/tab_layout`. Make sure advanced settings is on)
 - An option to add/remove text and icon on the tabs. (Can be change in the `editor_settings/interface/inspector/tab_style`)
 - The built-in property filter will search for properties on all tabs.
 - Settings is synced to all projects.
