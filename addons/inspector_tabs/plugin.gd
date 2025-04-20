@@ -11,11 +11,11 @@ func _enter_tree():
 	
 	add_inspector_plugin(plugin)
 	
-	plugin.property_container = EditorInterface.get_inspector().get_node("@VBoxContainer@6472/@VBoxContainer@6485")
-	plugin.favorite_container = EditorInterface.get_inspector().get_node("@VBoxContainer@6472/@VBoxContainer@6474")
+	plugin.property_container = EditorInterface.get_inspector().get_child(0).get_child(2)
+	plugin.favorite_container = EditorInterface.get_inspector().get_child(0).get_child(1)
 	plugin.UNKNOWN_ICON = EditorInterface.get_base_control().get_theme_icon("", "EditorIcons")
 	
-	filter_bar = EditorInterface.get_inspector().get_parent().get_node("@HBoxContainer@6254/@LineEdit@6255")
+	filter_bar = EditorInterface.get_inspector().get_parent().get_child(2).get_child(0)
 	filter_bar.text_changed.connect(plugin.filter_text_changed)
 
 	load_settings()
