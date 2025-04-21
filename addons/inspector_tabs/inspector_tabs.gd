@@ -16,13 +16,15 @@ var settings = EditorInterface.get_editor_settings()
 var tab_can_change = false # Stops the TabBar from changing tab
 
 var vertical_mode:bool = true # Tab position
+var tab_style:int
+var property_mode:int
 
 enum TabStyle{
 	TextOnly,
 	IconOnly,
 	TextAndIcon
 }
-var tab_style:int
+
 
 var object_custom_classes = [] # Custom classes in the inspector
 
@@ -30,6 +32,8 @@ var is_filtering = false # are the search bar in use
 
 var property_container # path to the editor inspector list of properties
 var favorite_container # path to the editor inspector favorite list.
+var viewer_container # path to the editor inspector "viewer" area. (camera viewer or skeleton3D bone tree)
+var property_scroll_bar:VScrollBar
 
 var UNKNOWN_ICON:ImageTexture # Use to check if the loaded icon is an unknown icon
 
@@ -76,8 +80,7 @@ func _parse_category(object: Object, category: String) -> void:
 
 	# Add it to the list of categories and tabs
 	# A disabled node such as PhysicsBody3D and CollisionObject3D didn't get its own tab.
-	var load_icon = base_control.get_theme_icon(category, "EditorIcons")
-	if not (base_class and load_icon == UNKNOWN_ICON):
+	if is_new_tab(base_class,category):
 		tabs.append(category)
 	categories.append(category)
 
@@ -158,22 +161,44 @@ func update_tabs() -> void:
 
 
 
-func tab_changed(tab: int) -> void:
+func tab_clicked(tab: int) -> void:
 	if is_filtering: return
-	var category_idx = -1
-	var tab_idx = -1
 	
-	# Show nececary properties
-	for i in property_container.get_children():
-		if i.get_class() == "EditorInspectorCategory":
-			category_idx += 1
-			var load_icon = base_control.get_theme_icon(categories[category_idx], "EditorIcons")
-			if not (is_base_class(categories[category_idx]) and load_icon == UNKNOWN_ICON):
-				tab_idx += 1
-		if tab_idx != tab:
-			i.visible = false
-		else:
-			i.visible = true
+	if property_mode == 0: # Tabbed
+		var category_idx = -1
+		var tab_idx = -1
+		
+		# Show nececary properties
+		for i in property_container.get_children():
+			if i.get_class() == "EditorInspectorCategory":
+				category_idx += 1
+				if is_new_tab(is_base_class(categories[category_idx]),categories[category_idx]):
+					tab_idx += 1
+			if tab_idx != tab:
+				i.visible = false
+			else:
+				i.visible = true
+	elif property_mode == 1: # Jump Scroll
+		var category_idx = -1
+		var tab_idx = -1
+		
+		# Show nececary properties
+		for i in property_container.get_children():
+			if i.get_class() == "EditorInspectorCategory":
+				category_idx += 1
+				if is_new_tab(is_base_class(categories[category_idx]),categories[category_idx]):
+					tab_idx += 1
+				if tab_idx == tab:
+					property_scroll_bar.value = (i.position.y+property_container.position.y)/EditorInterface.get_inspector().get_node("@VBoxContainer@6472").size.y*property_scroll_bar.max_value
+					break
+
+func is_new_tab(is_base_class:bool,category:String) -> bool:
+	return true
+	var load_icon = base_control.get_theme_icon(category, "EditorIcons")
+	if not (is_base_class and load_icon == UNKNOWN_ICON):
+		return true
+	return false
+
 
 # Is searching
 func filter_text_changed(text:String):
@@ -183,7 +208,7 @@ func filter_text_changed(text:String):
 		is_filtering = true
 	else:
 		is_filtering = false
-		tab_changed(tab_bar.current_tab)
+		tab_clicked(tab_bar.current_tab)
 
 	
 func tab_selected(tab):
@@ -218,7 +243,7 @@ func change_vertical_mode(mode:bool):
 
 	var inspector = EditorInterface.get_inspector().get_parent()
 	
-	tab_bar.tab_changed.connect(tab_changed)
+	tab_bar.tab_clicked.connect(tab_clicked)
 	
 	if not vertical_mode:
 		inspector.add_child(tab_bar)
@@ -230,13 +255,16 @@ func change_vertical_mode(mode:bool):
 		EditorInterface.get_inspector().add_child(tab_bar)
 		property_container.size_flags_horizontal = Control.SIZE_SHRINK_END
 		favorite_container.size_flags_horizontal = Control.SIZE_SHRINK_END
+		viewer_container.size_flags_horizontal = Control.SIZE_SHRINK_END
 		tab_bar.layout_direction =Control.LAYOUT_DIRECTION_RTL
 		tab_bar.top_level = true
 	else:
 		property_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		favorite_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		viewer_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		property_container.custom_minimum_size.x = 0
 		favorite_container.custom_minimum_size.x = 0
+		viewer_container.custom_minimum_size.x = 0
 	tab_bar.resized.connect(tab_resized)
 	tab_bar.tab_selected.connect(tab_selected)
 	tab_resized()
@@ -255,6 +283,10 @@ func settings_changed() -> void:
 	if style != null:
 		if tab_style != style:
 			tab_style = style
+	var prop_mode = settings.get("interface/inspector/tab_property_mode")
+	if prop_mode != null:
+		if property_mode != prop_mode:
+			property_mode = prop_mode
 			
 	if tab_pos != null and style != null:
 
@@ -263,8 +295,28 @@ func settings_changed() -> void:
 		# Store some values.
 		config.set_value("Settings", "tab layout", tab_pos)
 		config.set_value("Settings", "tab style", style)
+		config.set_value("Settings", "tab property mode", prop_mode)
 
 		# Save it to a file (overwrite if already exists).
 		var err = config.save(EditorInterface.get_editor_paths().get_config_dir()+"/InspectorTabsPluginSettings.cfg")
 		if err != OK:
 			print("Error saving inspector tab settings: ",error_string(err))
+
+func property_scrolling():
+	if property_mode != 1 or tab_bar.tab_count == 0 or is_filtering:return
+	var category_idx = -1
+	var tab_idx = -1
+	var category_y = - INF
+	if property_scroll_bar.value <= 1:
+		tab_bar.current_tab = 0
+		return
+	for i in property_container.get_children():
+		if i.get_class() == "EditorInspectorCategory":
+			if (i.position.y+property_container.position.y-EditorInterface.get_inspector().size.y/3) <= property_scroll_bar.value/property_scroll_bar.max_value*EditorInterface.get_inspector().get_node("@VBoxContainer@6472").size.y:
+				category_y = property_container.position.y
+			else:
+				tab_bar.current_tab = max(tab_idx,0)
+				break
+			category_idx += 1
+			if is_new_tab(is_base_class(categories[category_idx]),categories[category_idx]):
+				tab_idx += 1

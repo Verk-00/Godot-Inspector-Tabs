@@ -13,6 +13,9 @@ func _enter_tree():
 	
 	plugin.property_container = EditorInterface.get_inspector().get_child(0).get_child(2)
 	plugin.favorite_container = EditorInterface.get_inspector().get_child(0).get_child(1)
+	plugin.viewer_container = EditorInterface.get_inspector().get_child(0).get_child(0)
+	plugin.property_scroll_bar = EditorInterface.get_inspector().get_node("_v_scroll")
+	plugin.property_scroll_bar.scrolling.connect(plugin.property_scrolling)
 	plugin.UNKNOWN_ICON = EditorInterface.get_base_control().get_theme_icon("", "EditorIcons")
 	
 	filter_bar = EditorInterface.get_inspector().get_parent().get_child(2).get_child(0)
@@ -28,6 +31,7 @@ func _enter_tree():
 			plugin.change_vertical_mode(true)
 	
 	plugin.tab_style = settings.get("interface/inspector/tab_style")
+	plugin.property_mode = settings.get("interface/inspector/tab_property_mode")
 	
 	
 	settings.settings_changed.connect(plugin.settings_changed)
@@ -40,7 +44,7 @@ func load_settings():
 		print("ERROR LOADING SETTINGS FILE")
 
 	
-	settings.set("interface/inspector/tab_layout", config.get_value("Settings", "tab layout",0))
+	settings.set("interface/inspector/tab_layout", config.get_value("Settings", "tab layout",1))
 	
 	var property_info = {
 		"name": "interface/inspector/tab_layout",
@@ -50,7 +54,7 @@ func load_settings():
 	}
 	settings.add_property_info(property_info)
 
-	settings.set("interface/inspector/tab_style", config.get_value("Settings", "tab style",2))
+	settings.set("interface/inspector/tab_style", config.get_value("Settings", "tab style",1))
 	
 	property_info = {
 		"name": "interface/inspector/tab_style",
@@ -60,14 +64,27 @@ func load_settings():
 	}
 	settings.add_property_info(property_info)
 	
+	settings.set("interface/inspector/tab_property_mode", config.get_value("Settings", "tab property mode",0))
+	
+	property_info = {
+		"name": "interface/inspector/tab_property_mode",
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_ENUM,
+		"hint_string": "Tabbed,Jump Scroll",
+	}
+	settings.add_property_info(property_info)
+	
 func _exit_tree():
 	settings.set("interface/inspector/tab_layout", null)
 	settings.set("interface/inspector/tab_style", null)
+	settings.set("interface/inspector/tab_property_mode", null)
 	
 	plugin.property_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	plugin.favorite_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	plugin.viewer_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	plugin.property_container.custom_minimum_size.x = 0
 	plugin.favorite_container.custom_minimum_size.x = 0
+	plugin.viewer_container.custom_minimum_size.x = 0
 
 
 	remove_inspector_plugin(plugin)
@@ -85,8 +102,10 @@ func _process(delta: float) -> void:
 		plugin.tab_bar.rotation = -PI/2
 		plugin.property_container.custom_minimum_size.x = plugin.property_container.get_parent_area_size().x - plugin.tab_bar.size.y - 5
 		plugin.favorite_container.custom_minimum_size.x = plugin.favorite_container.get_parent_area_size().x - plugin.tab_bar.size.y - 5
+		plugin.viewer_container.custom_minimum_size.x = plugin.favorite_container.get_parent_area_size().x - plugin.tab_bar.size.y - 5
 		plugin.property_container.position.x = plugin.tab_bar.size.y + 5
 		plugin.favorite_container.position.x = plugin.tab_bar.size.y + 5
+		plugin.viewer_container.position.x = plugin.tab_bar.size.y + 5
 		
 
 	if plugin.tab_bar.tab_count != 0:
