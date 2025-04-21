@@ -18,8 +18,9 @@ Vertical layout           |  Horizontal layout
 - Resizing the inspector dock is kind of glitchy especially if the dock is made floating.
 
 # Installing
-Soon you will be able to get it from the godot [asset lib](https://godotengine.org/asset-library/asset). but for now you have to install it manually:
+You can install it from the [asset library](https://godotengine.org/asset-library/asset/3951).
 
+You can also install it manually:
 - Download the files.
 - Place the addon folder into your the root of your project.
 - In the project, go to `project_settings/plugins` and enable the plugin.
