@@ -1,5 +1,6 @@
 # Godot Inspector Tabs
 Godot add-on for spliting the inspector property classes into its own tabs. So that its shorter and require less scrolling.
+There's also a jump-scroll option that didn't hide the properties in different tabs.
 
 Vertical layout           |  Horizontal layout
 :-------------------------:|:-------------------------:
@@ -8,6 +9,7 @@ Vertical layout           |  Horizontal layout
 # Features
 - An option for horizontal/vertical tab layout. (Can be change in the `editor_settings/interface/inspector/tab_layout`. Make sure advanced settings is on)
 - An option to add/remove text and icon on the tabs. (Can be change in the `editor_settings/interface/inspector/tab_style`)
+- A Jump-scroll option that didn't hide the properties in different tabs. (Can be change in the `editor_settings/interface/inspector/tab_property_mode`)
 - The built-in property filter will search for properties on all tabs.
 - Settings is synced to all projects.
 - Support custom script classes.
