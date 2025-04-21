@@ -37,12 +37,18 @@ var property_scroll_bar:VScrollBar
 
 var UNKNOWN_ICON:ImageTexture # Use to check if the loaded icon is an unknown icon
 
+var current_parse_category:String = ""
+
 func _can_handle(object):
 	# We support all objects in this example.
 	return true
 
 # Start inspector loading
-func _parse_begin(object: Object) -> void:
+func parse_begin(object: Object) -> void:
+	categories_finish = false
+	categories.clear()
+	tabs.clear()
+	
 	tab_can_change = false
 	tab_bar.clear_tabs()
 	object_custom_classes.clear()
@@ -64,12 +70,13 @@ func _parse_begin(object: Object) -> void:
 
 # getting the category from the inspector
 func _parse_category(object: Object, category: String) -> void:
+	if category == "Atlas": return # Not sure what class this is. But it seems to break things.
+		
 	# reset the list if its the first category
 	if categories_finish:
-		categories.clear()
-		tabs.clear()
-		categories_finish = false
-		
+		parse_begin(object)
+
+
 	# Get custom class name
 	var base_class = true
 	if object_custom_classes.size() != 0:
@@ -79,31 +86,34 @@ func _parse_category(object: Object, category: String) -> void:
 			category = c_name
 
 	# Add it to the list of categories and tabs
-	# A disabled node such as PhysicsBody3D and CollisionObject3D didn't get its own tab.
 	if is_new_tab(base_class,category):
 		tabs.append(category)
 	categories.append(category)
-
+	
+	current_parse_category = category
+	
 # Finished getting inspector categories
 func _parse_end(object: Object) -> void:
+	if current_parse_category != "Node": return # False finish
+	current_parse_category = ""
+	
 	categories_finish = true
-	
 	update_tabs() # load tab
-		
 	tab_can_change = true
+
+	var tab = tabs.find(current_category)
+	if tab == -1:
+		tab_clicked(0)
+		tab_selected(0)
+		tab_bar.current_tab = 0
+	else:
+		tab_clicked(tab)
+		tab_bar.current_tab = tab
 	
-	# Set the selection to the previously selected tab
-	var has = false
-	for i in tabs.size():
-		if tabs[i] == current_category:
-			tab_bar.current_tab = i
-			has = true
-			break
-	if not has:
-		if tab_bar.tab_count != 0:
-			tab_bar.current_tab = 0
+
 	tab_resized()
 	
+
 
 # Is it not a custom class
 func is_base_class(c_name:String) -> bool:
@@ -139,6 +149,7 @@ func get_class_icon(c_name:String) -> ImageTexture:
 
 # add tabs
 func update_tabs() -> void:
+	tab_bar.clear_tabs()
 	for category in tabs:
 		var load_icon = get_class_icon(category)
 		
