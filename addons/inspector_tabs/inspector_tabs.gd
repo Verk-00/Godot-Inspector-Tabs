@@ -18,6 +18,7 @@ var tab_can_change = false # Stops the TabBar from changing tab
 var vertical_mode:bool = true # Tab position
 var tab_style:int
 var property_mode:int
+var merge_abstract_class_tabs:bool
 
 enum TabStyle{
 	TextOnly,
@@ -194,11 +195,10 @@ func tab_clicked(tab: int) -> void:
 					break
 
 func is_new_tab(is_base_class:bool,category:String) -> bool:
+	if merge_abstract_class_tabs:
+		if ClassDB.class_exists(category) and not ClassDB.can_instantiate(category):
+			return false
 	return true
-	var load_icon = base_control.get_theme_icon(category, "EditorIcons")
-	if not (is_base_class and load_icon == UNKNOWN_ICON):
-		return true
-	return false
 
 
 # Is searching
@@ -288,8 +288,12 @@ func settings_changed() -> void:
 	if prop_mode != null:
 		if property_mode != prop_mode:
 			property_mode = prop_mode
+	var merge_class = settings.get("interface/inspector/merge_abstract_class_tabs")
+	if merge_class != null:
+		if merge_abstract_class_tabs != merge_class:
+			merge_abstract_class_tabs = merge_class
 			
-	if tab_pos != null and style != null:
+	if tab_pos != null and style != null and prop_mode != null and merge_class != null:
 
 		#Save settings
 		var config = ConfigFile.new()
@@ -297,6 +301,7 @@ func settings_changed() -> void:
 		config.set_value("Settings", "tab layout", tab_pos)
 		config.set_value("Settings", "tab style", style)
 		config.set_value("Settings", "tab property mode", prop_mode)
+		config.set_value("Settings", "merge abstract class tabs", merge_abstract_class_tabs)
 
 		# Save it to a file (overwrite if already exists).
 		var err = config.save(EditorInterface.get_editor_paths().get_config_dir()+"/InspectorTabsPluginSettings.cfg")

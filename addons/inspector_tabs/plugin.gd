@@ -37,6 +37,7 @@ func _enter_tree():
 	
 	plugin.tab_style = settings.get("interface/inspector/tab_style")
 	plugin.property_mode = settings.get("interface/inspector/tab_property_mode")
+	plugin.merge_abstract_class_tabs = settings.get("interface/inspector/merge_abstract_class_tabs")
 	
 	
 	settings.settings_changed.connect(plugin.settings_changed)
@@ -82,10 +83,19 @@ func load_settings():
 	}
 	settings.add_property_info(property_info)
 	
+	settings.set("interface/inspector/merge_abstract_class_tabs", config.get_value("Settings", "merge abstract class tabs",true))
+	
+	property_info = {
+		"name": "interface/inspector/merge_abstract_class_tabs",
+		"type": TYPE_BOOL,
+	}
+	settings.add_property_info(property_info)
+	
 func _exit_tree():
 	settings.set("interface/inspector/tab_layout", null)
 	settings.set("interface/inspector/tab_style", null)
 	settings.set("interface/inspector/tab_property_mode", null)
+	settings.set("interface/inspector/merge_abstract_class_tabs", null)
 	
 	plugin.property_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	plugin.favorite_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
