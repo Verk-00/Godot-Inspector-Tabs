@@ -7,9 +7,10 @@ Vertical layout           |  Horizontal layout
 ![](https://github.com/user-attachments/assets/fc5455d2-c48d-4e1f-b51f-4c09e2d4eb83)  |  ![](https://github.com/user-attachments/assets/e2849982-a57f-46d6-bcfa-c38676032b9d)
 
 # Features
-- An option for horizontal/vertical tab layout. (Can be change in the `editor_settings/interface/inspector/tab_layout`. Make sure advanced settings is on)
-- An option to add/remove text and icon on the tabs. (Can be change in the `editor_settings/interface/inspector/tab_style`)
-- A Jump-scroll option that didn't hide the properties in different tabs. (Can be change in the `editor_settings/interface/inspector/tab_property_mode`)
+- An option for horizontal/vertical tab layout. (Can be changed in the `editor_settings/interface/inspector/tab_layout`. Make sure advanced settings is on)
+- An option to add/remove text and icon on the tabs. (Can be changed in the `editor_settings/interface/inspector/tab_style`)
+- A Jump-scroll option that didn't hide the properties in different tabs. (Can be changed in the `editor_settings/interface/inspector/tab_property_mode`)
+- An option to put abstract class into its child tab instead of its own. so that its easier to find. (Can be changed in the `editor_settings/interface/inspector/merge_abstract_class_tabs`)
 - The built-in property filter will search for properties on all tabs.
 - Settings is synced to all projects.
 - Support custom script classes and GDExtension classes.
