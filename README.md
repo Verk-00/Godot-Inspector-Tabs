@@ -12,11 +12,10 @@ Vertical layout           |  Horizontal layout
 - A Jump-scroll option that didn't hide the properties in different tabs. (Can be change in the `editor_settings/interface/inspector/tab_property_mode`)
 - The built-in property filter will search for properties on all tabs.
 - Settings is synced to all projects.
-- Support custom script classes.
+- Support custom script classes and GDExtension classes.
 - Favorite property will be shown in all tabs.
 
 # Known issues
-- Custom node from GDExtension will not be shown in the inspector.
 - Resizing the inspector dock is kind of glitchy especially if the dock is made floating.
 
 # Installing

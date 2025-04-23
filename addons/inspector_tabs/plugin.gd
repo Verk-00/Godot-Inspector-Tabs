@@ -6,6 +6,8 @@ var plugin
 var filter_bar:LineEdit
 var settings = EditorInterface.get_editor_settings()
 
+
+
 func _enter_tree():
 	plugin = preload("uid://d3uqhh42fvfuy").new()
 	
@@ -17,6 +19,9 @@ func _enter_tree():
 	plugin.property_scroll_bar = EditorInterface.get_inspector().get_node("_v_scroll")
 	plugin.property_scroll_bar.scrolling.connect(plugin.property_scrolling)
 	plugin.UNKNOWN_ICON = EditorInterface.get_base_control().get_theme_icon("", "EditorIcons")
+	
+	plugin.icon_grabber = preload("uid://doo2vh6otbog4").new()
+	
 	
 	filter_bar = EditorInterface.get_inspector().get_parent().get_child(2).get_child(0)
 	filter_bar.text_changed.connect(plugin.filter_text_changed)
@@ -35,6 +40,9 @@ func _enter_tree():
 	
 	
 	settings.settings_changed.connect(plugin.settings_changed)
+
+func _ready() -> void:
+	plugin.icon_grabber.update_icon_list()
 func load_settings():
 	var config = ConfigFile.new()
 	# Load data from a file.
@@ -86,7 +94,6 @@ func _exit_tree():
 	plugin.favorite_container.custom_minimum_size.x = 0
 	plugin.viewer_container.custom_minimum_size.x = 0
 
-
 	remove_inspector_plugin(plugin)
 	plugin.tab_bar.queue_free()
 
@@ -112,7 +119,3 @@ func _process(delta: float) -> void:
 		if EditorInterface.get_inspector().get_edited_object() == null:
 			plugin.tab_bar.clear_tabs()
 			
-
-
-
-		

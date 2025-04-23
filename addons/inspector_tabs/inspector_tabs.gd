@@ -34,6 +34,7 @@ var property_container # path to the editor inspector list of properties
 var favorite_container # path to the editor inspector favorite list.
 var viewer_container # path to the editor inspector "viewer" area. (camera viewer or skeleton3D bone tree)
 var property_scroll_bar:VScrollBar
+var icon_grabber
 
 var UNKNOWN_ICON:ImageTexture # Use to check if the loaded icon is an unknown icon
 
@@ -53,21 +54,6 @@ func parse_begin(object: Object) -> void:
 	tab_bar.clear_tabs()
 	object_custom_classes.clear()
 	
-	#Get all the custom class and custom inherit class of the node
-	var script:Script = object.get_script()
-	if script != null:
-		var c_name:String = ""
-		for prop in script.get_script_property_list(): # List of inherit class, and variables (and other thing?)
-			if prop.has("usage"):
-				if prop["usage"] == PROPERTY_USAGE_CATEGORY:
-					var check_script = load(prop["hint_string"]) # load script of subclass
-					c_name = check_script.get_global_name()
-					if c_name == "":
-						c_name = prop["name"]
-				elif prop["usage"] == 4102 and c_name != "": # class has @export
-					object_custom_classes.append(c_name)
-					c_name = ""
-
 # getting the category from the inspector
 func _parse_category(object: Object, category: String) -> void:
 	if category == "Atlas": return # Not sure what class this is. But it seems to break things.
@@ -76,26 +62,30 @@ func _parse_category(object: Object, category: String) -> void:
 	if categories_finish:
 		parse_begin(object)
 
-
-	# Get custom class name
-	var base_class = true
-	if object_custom_classes.size() != 0:
-		base_class = false
-		var c_name = object_custom_classes.pop_front()
-		if c_name != null:
-			category = c_name
-
-	# Add it to the list of categories and tabs
-	if is_new_tab(base_class,category):
-		tabs.append(category)
-	categories.append(category)
-	
 	current_parse_category = category
 	
 # Finished getting inspector categories
 func _parse_end(object: Object) -> void:
 	if current_parse_category != "Node": return # False finish
 	current_parse_category = ""
+	
+	for i in property_container.get_children():
+		if i.get_class() == "EditorInspectorCategory":
+			
+			# Get Node Name
+			var category = i.get("tooltip_text").split("|")
+			if category.size() > 1:
+				category = category[1]
+			else:
+				category = category[0]
+				
+			if category.split('"').size() > 1:
+				category = category.split('"')[1]
+			
+			# Add it to the list of categories and tabs
+			if is_new_tab(is_base_class(category),category):
+				tabs.append(category)
+			categories.append(category)
 	
 	categories_finish = true
 	update_tabs() # load tab
@@ -110,11 +100,8 @@ func _parse_end(object: Object) -> void:
 		tab_clicked(tab)
 		tab_bar.current_tab = tab
 	
-
 	tab_resized()
 	
-
-
 # Is it not a custom class
 func is_base_class(c_name:String) -> bool:
 	if c_name.contains("."):return false
@@ -125,33 +112,40 @@ func is_base_class(c_name:String) -> bool:
 	
 	
 func get_class_icon(c_name:String) -> ImageTexture:
-	var load_icon = null
+	
+	#Get GDExtension Icon
+	var load_icon = icon_grabber.get_icon(c_name)
+	if load_icon != null:
+		return load_icon
+	load_icon = UNKNOWN_ICON
+	
+	
 	if c_name.ends_with(".gd"):# GDScript Icon
 		load_icon = base_control.get_theme_icon("GDScript", "EditorIcons")
-	else: # Get editor icon
+	elif ClassDB.class_exists(c_name): # Get editor icon
 		load_icon = base_control.get_theme_icon(c_name, "EditorIcons")
-		
+	else:
+		# Get custom class icon
+		for list in ProjectSettings.get_global_class_list():
+			if list.class == c_name:
+				if list.icon != "":
+					var texture:Texture2D = load(list.icon)
+					var image = texture.get_image()
+					image.resize(load_icon.get_width(),load_icon.get_height())
+					return ImageTexture.create_from_image(image)
+				break
+
 	if load_icon != UNKNOWN_ICON:
 		return load_icon # Return if icon is not unknown
 	
-	# Get custom class icon
-	for list in ProjectSettings.get_global_class_list():
-		if list.class == c_name:
-			if list.icon != "":
-				var texture:Texture2D = load(list.icon)
-				var image = texture.get_image()
-				image.resize(load_icon.get_width(),load_icon.get_height())
-				return ImageTexture.create_from_image(image)
-			break
-			
 	# if icon not found just use the node disabled icon
 	return base_control.get_theme_icon("NodeDisabled", "EditorIcons")
 
 # add tabs
 func update_tabs() -> void:
 	tab_bar.clear_tabs()
-	for category in tabs:
-		var load_icon = get_class_icon(category)
+	for tab in tabs:
+		var load_icon = get_class_icon(tab)
 		
 		if vertical_mode:
 			# Rotate the image for the vertical tab
@@ -162,19 +156,15 @@ func update_tabs() -> void:
 			
 		match tab_style:
 			TabStyle.TextOnly:
-				tab_bar.add_tab(category,null)
+				tab_bar.add_tab(tab,null)
 			TabStyle.IconOnly:
 				tab_bar.add_tab("",load_icon)
 			TabStyle.TextAndIcon:
-				tab_bar.add_tab(category,load_icon)
-		tab_bar.set_tab_tooltip(tab_bar.tab_count-1,category)
-
-
-
+				tab_bar.add_tab(tab,load_icon)
+		tab_bar.set_tab_tooltip(tab_bar.tab_count-1,tab)
 
 func tab_clicked(tab: int) -> void:
 	if is_filtering: return
-	
 	if property_mode == 0: # Tabbed
 		var category_idx = -1
 		var tab_idx = -1
